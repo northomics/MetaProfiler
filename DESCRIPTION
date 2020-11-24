@@ -1,0 +1,26 @@
+Package: MetaProfiler
+Type: Package
+Title: Metaproteomics Approach to Incorporation Profiling of Stable Isotopes
+Version: 0.0.1
+Date: 2020-03-13
+Author: Patrick Smyth
+Maintainer: Patrick Smyth <psmyt096@uottawa.ca>
+Description: Calculates the local false discovery rate of heavy peptide features and performs , taxonomic, functional, phylogenetic, and time series analysis of microbiome dynamic studies.
+License: GPL (>= 2)
+Imports: 
+    Rcpp (>= 1.0.3),
+    data.table,
+    impute,
+    crayon,
+    ggplot2,
+    stringi,
+    circlize,
+    RColorBrewer,
+    grid,
+    gridExtra,
+    ComplexHeatmap (>= 2.1.1),
+    readr
+LinkingTo: Rcpp, RcppArmadillo
+Remotes: 
+    jokergoo/ComplexHeatmap
+RoxygenNote: 7.1.0
