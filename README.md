@@ -25,13 +25,13 @@ Patrick Smyth, Xu Zhang, Zhibin Ning, Janice Mayne, Jasmine I Moore, Krystal Wal
 Make sure to have `R >= 3.5.0` installed. Paste the following lines into your `R` session.
 
 ```{R}
-# instal devtools, if you do not have it.
+# install devtools, if you do not have it.
 if (!requireNamespace("devtools", quietly = TRUE))
     install.packages("devtools")
 
 # install MetaProfiler via devtools
 library(devtools)
-install_github("psmyth94/MetaProfiler")
+install_github("northomics/MetaProfiler")
 ```
 
 # Examples
@@ -39,9 +39,9 @@ install_github("psmyth94/MetaProfiler")
 This an example R script that creates the MetaProfiler class object.
 
 ```{R}
-  
+
 # the units for the time measurements.
-time_unit = "hour"
+time_unit = "day"
 # the start time of when the microbiome was fed metabolic stable isotopes.
 time_zero = 0
 # name of the incorporation measurements. MetaProSIP calls it RIA.
@@ -70,38 +70,31 @@ Object <- MetaProfiler(
   # the names of the variables.
   incorporation_name = "RIA",
   intensity_name = "INT",
-  labeling_ratio_name = NULL,
-  labeling_ratio_columns = NULL,
+  labeling_ratio_name = "RITZ", # changing naming of LR to RITZ
+  labeling_ratio_columns = NULL, # Don't take the columns containing the LR values. We will compute it using INT.
   score_name = "Cor.",
   # the columns containing the information.
   # Does not need to be specified as long as the first word is the corresponding variable's name, followed by a unique identifier
   # e.g. [RIA 1, RIA 2, RIA 3, etc] or [RIA light, RIA heavy].
   accession_column = "Protein Accessions"
+  pep2pro = pep2pro,
+  pep2taxon = pep2taxon,
+  pro2func = pro2func,
+  # all files were generated using MetaLab (http://dashboard.imetalab.ca/#/).
+  # The pep2pro, pep2taxon, and pro2func variable can also be a matrix, data.frame, or data.table.
+  # The function will try to guess the accession, peptide, taxon, and function columns of these tables.
+  # The peptide and taxon columns are relatively easy to guess, but the accession and function columns can be a little tricky.
+  # For the accession column, by default, `make_annotation_table` will look for columns with uniprot accession patterns.
+  # For the function column, it will look for column names containing typical functional annotation databases such as KEGG, BRITE, GO, COG, and NOG.
+  # If it fails to guess, you will need to specify the column names.
+  labeling_ratio_full_name = "Relative Intensity from Time Zero",
+  light_peptide = T, # we used light peptide spike-in
+
 )
 
-# all files were generated using MetaLab (http://dashboard.imetalab.ca/#/).
-# The pep2pro, pep2taxon, and pro2func variable can also be a matrix, data.frame, or data.table.
-# The function will try to guess the accession, peptide, taxon, and function columns of these tables.
-# The peptide and taxon columns are relatively easy to guess, but the accession and function columns can be a little tricky.
-# For the accession column, by default, `make_annotation_table` will look for columns with uniprot accession patterns.
-# For the function column, it will look for column names containing typical functional annotation databases such as KEGG, BRITE, GO, COG, and NOG.
-# If it fails to guess, you will need to specify the column names.
-Object <- make_annotation_table(
-  Object,
-  pep2pro = pep2pro, # the peptide to protein file.
-  pro2func = pro2func, # the accession to function file.
-  pep2taxon = pep2taxon, # the peptide to taxon file.
-  compute_razor_protein = T # compute razor protein. See https://med.uottawa.ca/core-facilities/facilities/proteomic/resources/interpret-result for details about what are razor proteins.
-)
-
-# Extract the heavy peptide features
-Object <- get_data(
-  Object,
-  light_peptide = F # Since the samples do not have a light protein spike-in. We will not assume that the light peptide will always be present.
-)
-
-# Compute an LFDR for each heavy peptide features
-Object <- lfdr(Object)
+# compute the LFDR for each feature.
+Object = lfdr(Object, n_iter = 10000, control = list(maxit = 10000), trace = T,
+              progress = T, score_threshold = 0.6, seed = 666)
 
 # Filter at an LFDR of 1/(1 + (1/10)) = 0.0909. This means that the odds for false discovery is 1 out of 10.
 Object <- filter_data(Object, LFDR_threshold = "Strong")
